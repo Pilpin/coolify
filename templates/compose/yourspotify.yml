@@ -1,0 +1,35 @@
+# documentation: https://github.com/Yooooomi/your_spotify
+# slogan: YourSpotify is a self-hosted application that tracks what you listen and offers you a dashboard to explore statistics about it!
+# tags: YourSpotify,spotify,music,statistics,open,source
+# logo: 
+# port: 8080,3000
+
+services:
+  mongo:
+    image: mongo:6
+    volumes:
+      - spotistats-db-data:/data/db
+      - spotistats-db-config:/data/configdb
+    healthcheck:
+      test: echo 'db.stats().ok' | mongo localhost:27017/test --quiet
+      interval: 2s
+      timeout: 10s
+      retries: 15
+  server:
+    image: yooooomi/your_spotify_server
+    depends_on:
+      - mongo
+    environment:
+      - SERVICE_FQDN_YOUR_SPOTIFY_API_8080
+      - API_ENDPOINT=$SERVICE_FQDN_YOUR_SPOTIFY_API_8080
+      - CLIENT_ENDPOINT=$SERVICE_FQDN_YOUR_SPOTIFY_3000
+      - MONGO_ENDPOINT=mongodb://mongo:27017
+      - SPOTIFY_PUBLIC=$SPOTIFY_CLIENT_ID
+      - SPOTIFY_SECRET=$SPOTIFY_CLIENT_SECRET
+  web:
+    image: yooooomi/your_spotify_client
+    depends_on:
+      - server
+    environment:
+      - SERVICE_FQDN_YOUR_SPOTIFY_3000
+      - API_ENDPOINT=$SERVICE_FQDN_YOUR_SPOTIFY_API_8080
